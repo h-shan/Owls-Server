@@ -14,7 +14,7 @@ var userList = [];
 var typingUsers = {};
 
 app.get('/', function(req, res){
-  res.send('<h1>Strategic Soccer Server</h1>');
+  res.send('<h1>Owls Server</h1>');
 });
 
 function getIndex(playerName) {
@@ -28,7 +28,7 @@ function getIndex(playerName) {
 }
 
 server.listen(serverPort, function(){
-  console.log('Listening on *:3000');
+  console.log('Listening on *:4000');
 });
 
 io.on('connection', function(clientSocket) {
@@ -67,15 +67,6 @@ io.on('connection', function(clientSocket) {
     io.emit("userExitUpdate", clientUsername);
   });
 
-
-  clientSocket.on('chatMessage', function(clientUsername, message){
-    var currentDateTime = new Date().toLocaleString();
-    delete typingUsers[clientUsername];
-    io.emit("userTypingUpdate", typingUsers);
-    io.emit('newChatMessage', clientUsername, message, currentDateTime);
-  });
-
-
   clientSocket.on("connectUser", function(clientUsername) {
       var userInfo = {};
       var foundUser = false;
@@ -112,18 +103,11 @@ io.on('connection', function(clientSocket) {
       io.emit("userConnectUpdate", userInfo)
   });
 
-
-  clientSocket.on("startType", function(clientUsername){
-    console.log("User " + clientUsername + " is writing a message...");
-    typingUsers[clientUsername] = 1;
-    io.emit("userTypingUpdate", typingUsers);
-  });
-
-
-  clientSocket.on("stopType", function(clientUsername){
-    console.log("User " + clientUsername + " has stopped writing a message...");
-    delete typingUsers[clientUsername];
-    io.emit("userTypingUpdate", typingUsers);
+  clientSocket.on("inviteToGame", function(clientUsername, opponentUsername) {
+    console.log("Invite from " + clientUsername + " to " + opponentUsername);
+    var indexOpponent = getIndex(opponentUsername);
+    if (indexOpponent == -1) return;
+    io.to(userList[indexOpponent]["id"]).emit("inviteToGame", clientUsername);
   });
 
   clientSocket.on("connectGame", function(clientUsername, otherUsername) {
@@ -153,28 +137,9 @@ io.on('connection', function(clientSocket) {
     io.to(userList[i]["id"]).emit("pauseUpdate", pauseOption)
   })
 
-  clientSocket.on("move", function(opponentName, playerName, moveInfo, time) {
+  clientSocket.on("move", function(opponentName, moveInfo, time) {
     var i = getIndex(opponentName);
     if (i == -1) return;
-    io.to(userList[i]["id"]).emit("moveUpdate", playerName, moveInfo, time);
+    io.to(userList[i]["id"]).emit("moveUpdate", moveInfo, time);
   })
-
-  clientSocket.on("positionVelocity", function(opponentName, posVelInfo, time) {
-    var i = getIndex(opponentName);
-    if (i == -1) return;
-    io.to(userList[i]["id"]).emit("positionVelocityUpdate", posVelInfo, time)
-  })
-
-  clientSocket.on("highlight", function(opponentName, playerToHighlight) {
-    var i = getIndex(opponentName);
-    if (i == -1) return;
-    io.to(userList[i]["id"]).emit("highlightUpdate", playerToHighlight)
-  })
-
-  clientSocket.on("goalScored", function(opponentName, goalBySender) {
-    var i = getIndex(opponentName);
-    if (i == -1) return;
-    io.to(userList[i]["id"]).emit("goalUpdate", goalBySender);
-  })
-
 });
