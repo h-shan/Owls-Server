@@ -142,4 +142,16 @@ io.on('connection', function(clientSocket) {
     if (i == -1) return;
     io.to(userList[i]["id"]).emit("moveUpdate", moveInfo, time);
   })
+
+  clientSocket.on("shoot", function(opponentName, bulletInfo, time) {
+    var i = getIndex(opponentName);
+    if (i == -1) return;
+    io.to(userList[i]["id"]).emit("shootUpdate", bulletInfo, time); 
+  })
+
+  clientSocket.on("gotHit", function(opponentName) {
+    var i = getIndex(opponentName);
+    if (i == -1) return;
+    io.to(userList[i]["id"]).emit("hitUpdate");
+  })
 });
